@@ -10,6 +10,7 @@ type MemberObject struct {
 	id int
 }
 
+// Add a resource to a pool and check it out
 func TestBasicOperation(t *testing.T) {
 	p := NewPool(1)
 	m := &MemberObject{id: 1}
@@ -27,6 +28,7 @@ func TestBasicOperation(t *testing.T) {
 	}
 }
 
+// Register a resource, ensure the size of the pool increases
 func TestRegister(t *testing.T) {
 	p := NewPool(1)
 	m := &MemberObject{id: 1}
@@ -38,6 +40,7 @@ func TestRegister(t *testing.T) {
 	}
 }
 
+// Error if we have no members registered
 func TestNoMembers(t *testing.T) {
 	p := NewPool(1)
 
@@ -46,6 +49,7 @@ func TestNoMembers(t *testing.T) {
 	}
 }
 
+// Time out waiting for a resource when none is available
 func TestTimeout(t *testing.T) {
 	p := NewPool(1)
 	m := &MemberObject{id: 1}
@@ -62,6 +66,7 @@ func TestTimeout(t *testing.T) {
 	}
 }
 
+// Don't accept more members than the pool's capacity
 func TestLimit(t *testing.T) {
 	p := NewPool(0)
 	m := &MemberObject{id: 1}
@@ -73,6 +78,7 @@ func TestLimit(t *testing.T) {
 	}
 }
 
+// Benchmark basic operations on the pool
 func BenchmarkOperation(b *testing.B) {
 	b.StopTimer()
 	p := NewPool(b.N)
