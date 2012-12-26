@@ -1,8 +1,8 @@
 package pool
 
 import (
-  "errors"
-  "time"
+	"errors"
+	"time"
 )
 
 type Pool chan *Member
@@ -13,34 +13,33 @@ var ErrLimit = errors.New("pool: already at size limit")
 var ErrTimeout = errors.New("pool: retrieval timed out")
 
 func (p Pool) Get(timeoutDuration time.Duration) (*Member, error) {
-  if len(p) == 0 {
-    return nil, ErrNoMembers
-  }
+	if cap(p) == 0 {
+		return nil, ErrNoMembers
+	}
 
-  timeout := make(chan bool, 1)
+	timeout := make(chan bool, 1)
 
-  go func() {
-    time.Sleep(timeoutDuration)
-    timeout <- true
-  }()
+	go func() {
+		time.Sleep(timeoutDuration)
+		timeout <- true
+	}()
 
-  select {
-    case m := <-p:
-      return m, nil
-    case <-timeout:
-      return nil, ErrTimeout
-  }
+	select {
+	case m := <-p:
+		return m, nil
+	case <-timeout:
+		return nil, ErrTimeout
+	}
 
-  return nil, nil
+	return nil, nil
 }
 
+func (p Pool) Put(m *Member) error {
+	if len(p) == cap(p) {
+		return ErrLimit
+	}
 
-func (p Pool) Put(m *Member) (error) {
-  if len(p) == cap(p) {
-    return ErrLimit
-  }
+	p <- m
 
-  p <- m
-
-  return nil
+	return nil
 }
