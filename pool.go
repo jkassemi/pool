@@ -7,19 +7,20 @@ import (
 
 type Pool struct {
 	Size    int
-	Channel chan interface{}
+	channel chan interface{}
 }
 
 var ErrNoMember = errors.New("pool: could not obtain member")
 var ErrLimit = errors.New("pool: already at size limit")
 var ErrTimeout = errors.New("pool: retrieval timed out")
 
+// 
 func NewPool(max int) *Pool {
-	return &Pool{Size: 0, Channel: make(chan interface{}, max)}
+	return &Pool{Size: 0, channel: make(chan interface{}, max)}
 }
 
 func (p *Pool) Get(timeoutDuration time.Duration) (interface{}, error) {
-	if len(p.Channel) == 0 && p.Size < cap(p.Channel) {
+	if len(p.channel) == 0 && p.Size < cap(p.channel) {
 		return nil, ErrNoMember
 	}
 
@@ -31,7 +32,7 @@ func (p *Pool) Get(timeoutDuration time.Duration) (interface{}, error) {
 	}()
 
 	select {
-	case m := <-p.Channel:
+	case m := <-p.channel:
 		return m, nil
 	case <-timeout:
 		return nil, ErrTimeout
@@ -41,7 +42,7 @@ func (p *Pool) Get(timeoutDuration time.Duration) (interface{}, error) {
 }
 
 func (p *Pool) Register(m interface{}) error {
-	if p.Size > cap(p.Channel) || cap(p.Channel) == 0 {
+	if p.Size > cap(p.channel) || cap(p.channel) == 0 {
 		return ErrLimit
 	}
 
@@ -54,7 +55,7 @@ func (p *Pool) Put(m interface{}) error {
 		return e
 	}
 
-	p.Channel <- m
+	p.channel <- m
 
 	return nil
 }
