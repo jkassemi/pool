@@ -4,17 +4,19 @@ package pool
 
 import (
 	"errors"
+	"sync"
 	"time"
 )
 
 type Pool struct {
-        // Size represents the current number of resources checked into 
-        // the pool, including resources that are checked out. 
-	Size    int
+	// Size represents the current number of resources checked into 
+	// the pool, including resources that are checked out. 
+	Size int
 
-        // channel is the mechanism by which the pool stores and awaits
-        // available resources
+	// channel is the mechanism by which the pool stores and awaits
+	// available resources
 	channel chan interface{}
+	mutex   sync.Mutex
 }
 
 // ErrNoMember is returned on a Get operation when there are no 
@@ -31,9 +33,9 @@ var ErrLimit = errors.New("pool: already at size limit")
 // item from the pool has timed out.
 var ErrTimeout = errors.New("pool: retrieval timed out")
 
-// NewPool returns a new Pool with the specified maximum
+// New returns a new Pool with the specified maximum
 // size of stored resources. 
-func NewPool(max int) *Pool {
+func New(max int) *Pool {
 	return &Pool{Size: 0, channel: make(chan interface{}, max)}
 }
 
@@ -41,21 +43,19 @@ func NewPool(max int) *Pool {
 // specifies the time before attempted retrieval of the connection
 // fails with ErrTimeout.
 func (p *Pool) Get(timeoutDuration time.Duration) (interface{}, error) {
+	p.mutex.Lock()
+
 	if len(p.channel) == 0 && p.Size < cap(p.channel) {
+		p.mutex.Unlock()
 		return nil, ErrNoMember
 	}
 
-	timeout := make(chan bool, 1)
-
-	go func() {
-		time.Sleep(timeoutDuration)
-		timeout <- true
-	}()
+	p.mutex.Unlock()
 
 	select {
 	case m := <-p.channel:
 		return m, nil
-	case <-timeout:
+	case <-time.After(timeoutDuration):
 		return nil, ErrTimeout
 	}
 
@@ -67,6 +67,9 @@ func (p *Pool) Get(timeoutDuration time.Duration) (interface{}, error) {
 // It should be used whenever the added resource needs to act as 
 // though it's been checked out already.
 func (p *Pool) Register(m interface{}) error {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
 	if p.Size > cap(p.channel) || cap(p.channel) == 0 {
 		return ErrLimit
 	}

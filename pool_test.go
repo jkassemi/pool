@@ -12,7 +12,7 @@ type MemberObject struct {
 
 // Add a resource to a pool and check it out
 func TestBasicOperation(t *testing.T) {
-	p := NewPool(1)
+	p := New(1)
 	m := &MemberObject{id: 1}
 
 	p.Put(m)
@@ -30,7 +30,7 @@ func TestBasicOperation(t *testing.T) {
 
 // Register a resource, ensure the size of the pool increases
 func TestRegister(t *testing.T) {
-	p := NewPool(1)
+	p := New(1)
 	m := &MemberObject{id: 1}
 
 	p.Register(m)
@@ -42,7 +42,7 @@ func TestRegister(t *testing.T) {
 
 // Error if we have no members registered
 func TestNoMembers(t *testing.T) {
-	p := NewPool(1)
+	p := New(1)
 
 	if _, e := p.Get(0); e == nil {
 		t.Fail()
@@ -51,7 +51,7 @@ func TestNoMembers(t *testing.T) {
 
 // Time out waiting for a resource when none is available
 func TestTimeout(t *testing.T) {
-	p := NewPool(1)
+	p := New(1)
 	m := &MemberObject{id: 1}
 
 	p.Put(m)
@@ -68,7 +68,7 @@ func TestTimeout(t *testing.T) {
 
 // Don't accept more members than the pool's capacity
 func TestLimit(t *testing.T) {
-	p := NewPool(0)
+	p := New(0)
 	m := &MemberObject{id: 1}
 
 	e := p.Put(m)
@@ -81,7 +81,7 @@ func TestLimit(t *testing.T) {
 // Benchmark basic operations on the pool
 func BenchmarkOperation(b *testing.B) {
 	b.StopTimer()
-	p := NewPool(b.N)
+	p := New(b.N)
 	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {
@@ -112,7 +112,7 @@ func ExamplePool() {
 	}
 
 	// Our pool has a maximum of 2 connections
-	pool := NewPool(2)
+	pool := New(2)
 
 	// Grab a connection from the pool, or try to add a new connection
 	getConnection := func() (*Connection, error) {
