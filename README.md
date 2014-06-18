@@ -1,6 +1,8 @@
 Go Pool
 ================================
 
+*NO LONGER ACTIVELY MAINTAINED* - this project should be considered Archived. If you are interested in maintaining an official fork, please contact me directly.
+
 Not intended for production use - learning project. Sample usage:
 
 ```go
